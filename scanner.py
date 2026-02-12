@@ -7,6 +7,9 @@ VIDEO_EXT = (".mp4", ".mkv", ".avi")
 AUDIO_EXT = (".mp3", ".wav", ".aac")
 DOC_EXT   = (".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx")
 
+ALL_EXT = IMAGE_EXT + VIDEO_EXT + AUDIO_EXT + DOC_EXT
+
+'''
 SCAN_DIRS = {
     "DCIM/Camera": "Camera",
     "Pictures/WhatsApp Images": "WhatsApp",
@@ -15,6 +18,7 @@ SCAN_DIRS = {
     "Music": "Music",
     "Download": "Downloads"
 }
+'''
 
 def classify_file(filename):
     name = filename.lower()
@@ -41,6 +45,7 @@ def get_file_date(remote_path):
 
     return stat.split()[0]
 
+'''
 def scan_phone():
     results = []
 
@@ -65,5 +70,54 @@ def scan_phone():
                 "path": full_path,
                 "name": file
             })
+
+    return results
+'''
+def scan_phone():
+    results = []
+
+    # Run recursive find
+    # output = adb(["shell", "find", "/sdcard", "-type", "f"])
+    '''output = adb([
+        "shell",
+        "find", "/storage/emulated/0",
+        "-type", "f",
+        #"!", "-path", "/storage/emulated/0/Android/data/*"
+        #"-path", "/storage/emulated/0/Android/data/*", "-prune",
+        #"-o",        
+        #"-print"
+    ])'''
+    output = adb([
+        "shell",
+        "find", "/storage/emulated/0",
+        "-path", "/storage/emulated/0/Android/data", "-prune",
+        "-o",
+        "-path", "/storage/emulated/0/Android/obb", "-prune",
+        "-o",
+        "-type", "f",
+        "-print"
+    ])
+
+    print("RAW FIND OUTPUT:")
+    print(output[:500])
+
+    files = output.splitlines()
+
+    for full_path in files:
+        filename = os.path.basename(full_path)
+        category = classify_file(filename)
+
+        if not category:
+            continue
+
+        date = get_file_date(full_path)
+
+        results.append({
+            "category": category,
+            "source": "All Storage",
+            "date": date,
+            "path": full_path,
+            "name": filename
+        })
 
     return results
